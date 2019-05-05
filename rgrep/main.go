@@ -1,96 +1,13 @@
 package main
 
 import (
-    "path/filepath"
     "fmt"
     "io"
     "log"
     "os"
+    "path/filepath"
     "sync"
 )
-
-type BoyerMoorePreprocessing struct {
-    bc map[byte][]int
-}
-
-var preprocessingCache map[string]*BoyerMoorePreprocessing = map[string]*BoyerMoorePreprocessing{}
-
-func generatePreprocessing(pattern []byte) *BoyerMoorePreprocessing {
-    bm := &BoyerMoorePreprocessing{bc: map[byte][]int{}}
-
-    // Bad character rule
-    prev_idx := make(map[byte]int)
-    for idx, b := range(pattern) {
-        if _, ok := bm.bc[b]; !ok {
-            bm.bc[b] = make([]int, len(pattern))
-        }
-        if prev, ok := prev_idx[b]; ok {
-            for i := prev; i < idx; i++ {
-                // If the symbol is found, shift to it
-                // pattscale
-                // test
-                //   test
-                // bm.bc['t'][2] = 2 - 0 = 2
-
-                bm.bc[b][i] = idx - prev
-            }
-        } else {
-            for i := 0; i < idx; i++ {
-                // If the symbol is not found before, move the start of
-                // the string past the mismatched symbol
-                // pabtscale
-                // best
-                //    best
-                // bm.bc['b'][2] = 2 + 1 = 3
-
-                bm.bc[b][i] = idx + 1
-            }
-        }
-        prev_idx[b] = idx
-    }
-    for b, bc := range(bm.bc) {
-        for idx := prev_idx[b]; idx < len(pattern); idx++ {
-            bc[idx] = idx - prev_idx[b]
-        }
-    }
-
-    // TODO: other two rules
-
-    return bm
-}
-
-func boyerMoore(text []byte, pattern_str string) bool {
-    pattern := []byte(pattern_str)
-    bm, ok := preprocessingCache[pattern_str]
-    if !ok {
-        preprocessingCache[pattern_str] = generatePreprocessing(pattern)
-    }
-
-    for k := len(pattern) - 1; k < len(text); {
-        start := k - len(pattern) + 1
-        shift := 0
-        for i := k; i >= start; i-- {
-            p := i - start  // cursor inside pattern
-            if text[i] != pattern[p] {
-                // Appy the bad character rule
-                var bc_shift int
-                if bc, ok := bm.bc[text[i]]; ok {
-                    bc_shift = bc[p]
-                } else {
-                    bc_shift = p + 1
-                }
-                shift = bc_shift
-                break
-            }
-        }
-        if shift == 0 {
-            return true
-        } else {
-            k += shift
-        }
-    }
-    return false
-}
 
 func printLoop(files chan string) {
     for file := range(files) {
@@ -128,7 +45,6 @@ func grep(file string, pattern string) (bool, error) {
             pos, err = f.Seek(int64(-len(pattern)), 1)
             if err != nil {
                 return false, err
-                continue
             }
         }
     }

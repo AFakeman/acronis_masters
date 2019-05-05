@@ -4,47 +4,44 @@ import (
     "testing"
 )
 
-func TestSearchTrivial(t *testing.T) {
-    text := []byte("simple")
-    pattern := []byte("simple")
-
-    if !boyerMoore(text, pattern, nil) {
-        t.Fail()
+func checkBoyerMoore(t *testing.T, text string, pattern string, expect bool) {
+    if boyerMoore([]byte(text), pattern) != expect {
+        if expect {
+            t.Errorf("Could not find [%s] in [%s]", pattern, text)
+        } else {
+            t.Errorf("Found [%s] in [%s]", pattern, text)
+        }
     }
+}
+
+func TestSearchTrivial(t *testing.T) {
+    checkBoyerMoore(t, "simple", "simple", true)
 }
 
 func TestSearchTrivialFalse(t *testing.T) {
-    text := []byte("simple")
-    pattern := []byte("s1mple")
-
-    if boyerMoore(text, pattern, nil) {
-        t.Fail()
-    }
+    checkBoyerMoore(t, "simple", "s1mple", false)
 }
 
 func TestSearchNonTrivial(t *testing.T) {
-    text := []byte("A quick brown fox jumps over the lazy dog")
-    pattern := []byte("lazy")
-
-    if !boyerMoore(text, pattern, nil) {
-        t.Fail()
-    }
+    checkBoyerMoore(t,
+        "A quick brown fox jumps over the lazy dog",
+        "lazy",
+        true,
+    )
 }
 
-func TestSearchNonTrivial2(t *testing.T) {
-    text := []byte(" lazy")
-    pattern := []byte("lazy")
-
-    if !boyerMoore(text, pattern, nil) {
-        t.Fail()
-    }
+func TestSearchNonTrivialSimple(t *testing.T) {
+    checkBoyerMoore(t,
+        " lazy",
+        "lazy",
+        true,
+    )
 }
 
 func TestSearchNonTrivialFail(t *testing.T) {
-    text := []byte("A quick brown fox jumps over the lazy dog")
-    pattern := []byte("la3y")
-
-    if boyerMoore(text, pattern, nil) {
-        t.Fail()
-    }
+    checkBoyerMoore(t,
+        "A quick brown fox jumps over the lazy dog",
+        "la3y",
+        false,
+    )
 }
